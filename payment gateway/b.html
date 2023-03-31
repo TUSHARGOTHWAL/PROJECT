@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pay with Crypto</title>
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+  <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.4.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.4.1/firebase-functions.js"></script>
+  
+</head>
+<style>
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 50px;
+  }
+  .input {
+    margin: 10px;
+    padding: 5px;
+    border-radius: 5px;
+    border: none;
+    background-color: #f2f2f2;
+    width: 300px;
+    text-align: center;
+    font-size: 16px;
+    font-family: sans-serif;
+  }
+  .button {
+    margin: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    background-color: #007bff;
+    color: #fff;
+    width: 200px;
+    font-size: 16px;
+    font-family: sans-serif;
+    cursor: pointer;
+    text-align: center;
+  }
+  .button:hover {
+    background-color: #0056b3;
+  }
+</style>
+<body>
+  <form>
+    <label for="crypto">Select cryptocurrency:</label>
+    <select id="crypto" name="crypto">
+      <option value="ETH">Ethereum</option>
+      <option value="MATIC">Polygon (MATIC)</option>
+      <option value="SOL">Solana (SOL)</option>
+    </select><br>
+    <label for="amount">Amount:</label>
+    <input type="text" id="amount" name="amount"><br>
+    <button type="button" onclick="pay()">Pay</button>
+  </form>
+  <p id="status"></p>
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+    apiKey: "AIzaSyB42yWk9gpE3sFe0XkeqtWNLJ73-cVg1aI",
+    authDomain: "farmate-49212.firebaseapp.com",
+    databaseURL: "https://farmate-49212-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "farmate-49212",
+    storageBucket: "farmate-49212.appspot.com",
+    messagingSenderId: "584200670850",
+    appId: "1:584200670850:web:9c6caf4faa6384c50dee9b",
+    measurementId: "G-G012K1CHCD"
+  };
+    firebase.initializeApp(firebaseConfig);
+    const functions = firebase.functions();
+    
+    async function pay() {
+      // Detect MetaMask
+      if (typeof window.ethereum === 'undefined') {
+        document.getElementById('status').innerHTML = 'Please install MetaMask to use this feature.';
+        return;
+      }
+      
+      // Connect to MetaMask
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      
+      // Set recipient address
+      const recipientAddress = '0x3ACc36d4754689409Fc68c592211DB73Bec1dA5d';
+      
+      // Get user input
+      const crypto = document.getElementById('crypto').value;
+      const amount = document.getElementById('amount').value;
+      
+      // Create transaction object
+      let tx;
+      if (crypto === 'ETH') {
+        tx = {
+          to: recipientAddress,
+          value: ethers.utils.parseEther(amount)
+        };
+      } else if (crypto === 'MATIC') {
+        tx = {
+          to: recipientAddress,
+          value: ethers.utils.parseUnits(amount, 'ether'),
+          gasPrice: ethers.utils.parseUnits('30', 'gwei'),
+          gasLimit: ethers.utils.parseUnits('400000', 'wei'),
+          chainId: 137
+        };
+      } else if (crypto === 'SOL') {
+        tx = {
+          to: recipientAddress,
+          value: ethers.utils.parseUnits(amount, 'ether'),
+          gasPrice: ethers.utils.parseUnits('100', 'gwei'),
+          gasLimit: ethers.utils.parseUnits('300000', 'wei'),
+          chainId: 101
+        };
+      }
+      
+      // Send transaction
+      try {
+        const signedTx = await signer.sendTransaction(tx);
+        document.getElementById('status').innerHTML = 'Payment sent! Transaction hash: ' + signedTx.hash;
+        // Send payment details to Firebase Cloud Function
+        const payFunction = functions.httpsCallable('pay');
+        const result = await payFunction({ crypto, amount, txHash: signedTx.hash });
+        console.log(result.data);
+      } catch (e) {
+        document.getElementById('status').innerHTML = 'Error: ' + e.message;
+      }
+    }
+  </script>
+</body>
+</html>

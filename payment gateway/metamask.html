@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<style>
+		.container {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			margin-top: 50px;
+		}
+		.input {
+			margin: 10px;
+			padding: 5px;
+			border-radius: 5px;
+			border: none;
+			background-color: #f2f2f2;
+			width: 300px;
+			text-align: center;
+			font-size: 16px;
+			font-family: sans-serif;
+		}
+		.button {
+			margin: 10px;
+			padding: 10px;
+			border-radius: 5px;
+			border: none;
+			background-color: #007bff;
+			color: #fff;
+			width: 200px;
+			font-size: 16px;
+			font-family: sans-serif;
+			cursor: pointer;
+			text-align: center;
+		}
+		.button:hover {
+			background-color: #0056b3;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>Payment Integration with Metamask Web3</h1>
+		<input class="input" type="text" placeholder="Enter amount">
+		<input class="input" type="text" placeholder="Enter recipient address" value="0x3ACc36d4754689409Fc68c592211DB73Bec1dA5d">
+		<button class="button" onclick="payWithMetaMask()">Pay with MetaMask</button>
+	</div>
+	<script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+	<script>
+		async function payWithMetaMask() {
+			if (typeof window.ethereum !== 'undefined') {
+				await window.ethereum.enable();
+				const web3 = new Web3(window.ethereum);
+				const accounts = await web3.eth.getAccounts();
+				const amount = document.querySelector('.input:nth-of-type(1)').value;
+				const recipient = document.querySelector('.input:nth-of-type(2)').value;
+				await web3.eth.sendTransaction({
+					from: accounts[0],
+					to: recipient,
+					value: web3.utils.toWei(amount, 'ether'),
+				});
+				alert('Payment successful');
+			} else {
+				const result = confirm('MetaMask not detected. Do you want to install it?');
+				if (result) {
+					window.location.href = 'https://metamask.io/download.html';
+				}
+			}
+		}
+	</script>
+</body>
+</html>
